@@ -1,0 +1,7 @@
+#!/bin/bash
+
+cat ensure.py > /usr/bin/ensure
+cat uniquelines.sh > /usr/bin/uniquelines
+
+chmod +x /usr/bin/ensure
+chmod +x /usr/bin/uniquelines
