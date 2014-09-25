@@ -8,18 +8,24 @@ import fnmatch
 class Ensure:
 
 	##- Settings -##
+
+	## Values
 	filePath      = None
 	outputFile    = None
 	wherePattern  = None
 	containString = None
 	lineValue     = None
+        newValue      = None
+
+	## Options
 	invertResult  = False
 	noop          = False
 	verbose       = False
 	force         = False
+	dedup         = False
+
 
 	##- Methods  -##
-
 
 	## Init method
 	def __init__(self):
@@ -52,14 +58,15 @@ class Ensure:
 	## Performs the operation
 	def operateOnFile(self):
 		with open(self.filePath,"r") as f:
-			current = f.read()
+			self.newValue = f.read()
 			for line in self.getSelectedLine():
 				if not line == '':
 					if self.verbose: print('\t[I] Replacing "%s" with "%s"...'%(line,self.lineValue))
-					current = current.replace(line,self.lineValue)
-
+					self.newValue = self.newValue.replace(line,self.lineValue)
+		if self.dedup:
+			self.dedupText()
 		if self.outputFile == None:
-			print(current)
+			print(self.newValue)
 		else:
 			writeFile = True
 			if os.path.isfile(self.outputFile) and not self.force:
@@ -70,10 +77,10 @@ class Ensure:
 					writeFile = False
 			if writeFile:
 				with open(self.outputFile,"w") as f:
-					if self.noop and not current == "":
+					if self.noop and not self.newValue == "":
 						print('\t[N] The file "%s" would have been written to.'%(self.outputFile))
 					else:
-						f.write(current)
+						f.write(self.newValue)
 
 	## Parse args
 	def argParse(self,args = sys.argv):
@@ -119,6 +126,10 @@ class Ensure:
 			if arg.lower() == "--force":
 				self.force = True
 
+			## Test for dedup
+			if arg.lower() == "--dedup" or arg.lower() == "-d":
+				self.dedup = True
+
 			## Increments the iterater
 			i += 1
 
@@ -142,6 +153,14 @@ class Ensure:
 			matching = lines
 		return(matching)
 
+	## Deduplicates subustitutions
+	def dedupText(self):
+		#print "Checking target '%s'"%(target)
+		target = self.lineValue
+		dual = "%s\n%s"%(target,target)
+		if dual in self.newValue:
+			self.newValue = self.newValue.replace(dual,target)
+				
 
 
 ##- Performs the operation -##
